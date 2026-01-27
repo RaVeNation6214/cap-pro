@@ -1,0 +1,170 @@
+# =========================
+# Python bytecode & cache
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Virtual environments
+# =========================
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# =========================
+# Dependency / package dirs
+# =========================
+site-packages/
+pip-wheel-metadata/
+.eggs/
+*.egg-info/
+.eggs/
+
+# =========================
+# Build & distribution
+# =========================
+build/
+dist/
+develop-eggs/
+downloads/
+sdist/
+wheels/
+pip-log.txt
+
+# =========================
+# PyInstaller
+# =========================
+*.manifest
+*.spec
+
+# =========================
+# Testing / coverage
+# =========================
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# =========================
+# Jupyter / notebooks
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# IDEs & editors
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# Logs & runtime files
+# =========================
+*.log
+logs/
+*.pid
+
+# =========================
+# OS-specific
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Environment & secrets
+# =========================
+.env.*
+*.env
+secrets/
+*.key
+*.pem
+
+# =========================
+# ML / Data artifacts
+# =========================
+data/
+datasets/
+models/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.h5
+
+# =========================
+# Misc
+# =========================
+.cache/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+
+# =========================
+# Node / package managers
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# =========================
+# Build outputs
+# =========================
+build/
+dist/
+out/
+.next/
+.vercel/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Cache
+# =========================
+.cache/
+.vite/
+.eslintcache
+.parcel-cache/
+
+# =========================
+# Coverage
+# =========================
+coverage/
+
+# =========================
+# IDEs & editors
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# OS-specific
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Misc
+# =========================
+*.log
