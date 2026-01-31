@@ -13,8 +13,7 @@ export default function Card({
       whileHover={hover ? { y: -4, scale: 1.01 } : {}}
       transition={{ duration: 0.2 }}
       className={clsx(
-        'glass-card',
-        gradient && 'gradient-border',
+        'bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-6 shadow-xl shadow-purple-900/10',
         hover && 'cursor-pointer',
         className
       )}

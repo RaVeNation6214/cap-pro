@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload,
@@ -26,29 +25,80 @@ contract Example {
 }
 `
 
+const fallbackSamples = [
+  {
+    id: 'sample-reentrancy',
+    name: 'Simple Reentrancy',
+    description: 'Unsafe withdraw before state update.',
+    expected_vulnerabilities: ['Reentrancy'],
+    code: `pragma solidity ^0.8.0;
+
+contract Vault {
+    mapping(address => uint256) public balances;
+
+    function deposit() external payable {
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw(uint256 amount) external {
+        require(balances[msg.sender] >= amount, "Insufficient");
+        (bool ok, ) = msg.sender.call{value: amount}("");
+        require(ok, "Transfer failed");
+        balances[msg.sender] -= amount;
+    }
+}
+`,
+  },
+  {
+    id: 'sample-access-control',
+    name: 'Access Control',
+    description: 'tx.origin used for authorization.',
+    expected_vulnerabilities: ['Access Control'],
+    code: `pragma solidity ^0.8.0;
+
+contract AuthExample {
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function privileged() external {
+        require(tx.origin == owner, "Not owner");
+    }
+}
+`,
+  },
+]
+
 export default function Analyze() {
-  const navigate = useNavigate()
   const [code, setCode] = useState('')
   const [sampleContracts, setSampleContracts] = useState([])
   const [selectedSample, setSelectedSample] = useState(null)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [result, setResult] = useState(null)
+  const editorRef = useRef(null)
+  const highlightRef = useRef(null)
 
   // Fetch sample contracts
   useEffect(() => {
     getSampleContracts()
       .then((data) => setSampleContracts(data.contracts))
-      .catch((err) => console.error('Failed to load samples:', err))
+      .catch((err) => {
+        console.error('Failed to load samples:', err)
+        setSampleContracts(fallbackSamples)
+      })
   }, [])
 
   // Handle sample selection
-  const handleSelectSample = (sample) => {
+  const handleSelectSample = (sampleId) => {
+    const sample = sampleContracts.find((item) => item.id === sampleId)
+    if (!sample) return
     setSelectedSample(sample)
     setCode(sample.code)
-    setIsDropdownOpen(false)
     setError(null)
   }
 
@@ -110,11 +160,8 @@ export default function Analyze() {
     setError(null)
 
     try {
-      const result = await analyzeContract(code)
-      // Store result and navigate to results page
-      sessionStorage.setItem('analysisResult', JSON.stringify(result))
-      sessionStorage.setItem('analyzedCode', code)
-      navigate('/results')
+      const response = await analyzeContract(code)
+      setResult(response)
     } catch (err) {
       setError(err.message || 'Analysis failed. Please try again.')
     } finally {
@@ -124,6 +171,46 @@ export default function Analyze() {
 
   // Line numbers
   const lineCount = code.split('\n').length || 1
+
+  const highlightedLines = useMemo(() => {
+    const text = code || ''
+    const lines = text.split('\n')
+    const tokenRegex = /(\/\/.*$)|("(?:\\.|[^"])*"|'(?:\\.|[^'])*')|(\b(?:pragma|solidity|contract|function|return|returns|if|else|for|while|require|revert|emit|event|modifier|new)\b)|(\b(?:uint|uint256|int|address|bool|string|mapping|memory|storage|calldata|public|private|external|internal|view|pure|payable)\b)|(\b\d+(\.\d+)?\b)/g
+
+    return lines.map((line, lineIndex) => {
+      const parts = []
+      let lastIndex = 0
+      let match
+
+      while ((match = tokenRegex.exec(line)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push({ text: line.slice(lastIndex, match.index), className: 'text-dark-900' })
+        }
+        if (match[1]) parts.push({ text: match[1], className: 'text-emerald-600' }) // comment
+        else if (match[2]) parts.push({ text: match[2], className: 'text-amber-600' }) // string
+        else if (match[3]) parts.push({ text: match[3], className: 'text-purple-600' }) // keyword
+        else if (match[4]) parts.push({ text: match[4], className: 'text-blue-600' }) // type
+        else if (match[5]) parts.push({ text: match[5], className: 'text-orange-600' }) // number
+        lastIndex = match.index + match[0].length
+      }
+
+      if (lastIndex < line.length) {
+        parts.push({ text: line.slice(lastIndex), className: 'text-dark-900' })
+      }
+
+      return (
+        <div key={`${lineIndex}-${line}`} className="whitespace-pre">
+          {parts.length
+            ? parts.map((part, index) => (
+              <span key={`${lineIndex}-${index}`} className={part.className}>
+                {part.text}
+              </span>
+            ))
+            : <span className="text-dark-900">{' '}</span>}
+        </div>
+      )
+    })
+  }, [code])
 
   return (
     <div className="pt-24 pb-12 min-h-screen">
@@ -138,10 +225,10 @@ export default function Analyze() {
             <FileCode className="w-4 h-4 mr-2" />
             Contract Analysis
           </Badge>
-          <h1 className="text-4xl font-bold text-dark-100 mb-4">
+          <h1 className="text-4xl font-bold text-dark-900 mb-4">
             Analyze Your Smart Contract
           </h1>
-          <p className="text-dark-400 max-w-2xl mx-auto">
+          <p className="text-dark-700 max-w-2xl mx-auto">
             Paste your Solidity code below or upload a .sol file to detect
             vulnerabilities with our AI-powered analysis engine.
           </p>
@@ -158,53 +245,26 @@ export default function Analyze() {
             {/* Sample Contracts Dropdown */}
             <Card hover={false}>
               <CardContent>
-                <h3 className="text-sm font-semibold text-dark-200 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-dark-800 mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Sample Contracts
                 </h3>
                 <div className="relative">
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-dark-800/50 border border-dark-600 text-left flex items-center justify-between hover:border-dark-500 transition-colors"
+                  <select
+                    value={selectedSample ? selectedSample.id : ''}
+                    onChange={(e) => handleSelectSample(e.target.value)}
+                    className="w-full appearance-none px-4 py-2.5 rounded-lg bg-white/90 border border-dark-200 text-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-200"
                   >
-                    <span className="text-dark-300 truncate">
-                      {selectedSample ? selectedSample.name : 'Select a sample...'}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-dark-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 z-20 glass rounded-lg border border-dark-600 overflow-hidden"
-                      >
-                        {sampleContracts.map((sample) => (
-                          <button
-                            key={sample.id}
-                            onClick={() => handleSelectSample(sample)}
-                            className="w-full px-4 py-3 text-left hover:bg-dark-700/50 transition-colors border-b border-dark-700/50 last:border-0"
-                          >
-                            <div className="font-medium text-dark-200 text-sm">
-                              {sample.name}
-                            </div>
-                            <div className="text-xs text-dark-400 mt-0.5">
-                              {sample.description}
-                            </div>
-                            <div className="flex gap-1 mt-2">
-                              {sample.expected_vulnerabilities.map((vuln) => (
-                                <Badge key={vuln} variant="danger" size="sm">
-                                  {vuln}
-                                </Badge>
-                              ))}
-                            </div>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <option value="" disabled>
+                      {sampleContracts.length ? 'Select a sample...' : 'Samples unavailable'}
+                    </option>
+                    {sampleContracts.map((sample) => (
+                      <option key={sample.id} value={sample.id}>
+                        {sample.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
                 </div>
               </CardContent>
             </Card>
@@ -220,11 +280,10 @@ export default function Analyze() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`block w-full p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
-                    isDragging
+                  className={`block w-full p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${isDragging
                       ? 'border-primary-500 bg-primary-500/10'
                       : 'border-dark-600 hover:border-dark-500 hover:bg-dark-800/30'
-                  }`}
+                    }`}
                 >
                   <input
                     type="file"
@@ -281,29 +340,19 @@ export default function Analyze() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <Card hover={false} className="overflow-hidden">
-              {/* Editor Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700/50 bg-dark-800/30">
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/70" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-                    <div className="w-3 h-3 rounded-full bg-green-500/70" />
-                  </div>
-                  <span className="text-sm text-dark-400 font-mono">
-                    {selectedSample ? `${selectedSample.id}.sol` : 'contract.sol'}
-                  </span>
-                </div>
-                <div className="text-sm text-dark-500">
-                  {lineCount} lines
-                </div>
+            <Card hover={false} className="overflow-hidden border border-dark-100/70 bg-white">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-dark-100/70 bg-white/90">
+                <span className="text-sm font-semibold text-dark-800">
+                  {selectedSample ? `${selectedSample.id}.sol` : 'contract.sol'}
+                </span>
+                <div className="text-sm text-dark-500">{lineCount} lines</div>
               </div>
 
               {/* Code Editor */}
               <div className="relative">
                 <div className="flex">
                   {/* Line Numbers */}
-                  <div className="flex-shrink-0 py-4 px-2 bg-dark-900/50 text-right select-none border-r border-dark-700/50">
+                  <div className="flex-shrink-0 py-4 px-2 bg-dark-50 text-right select-none border-r border-dark-100/70">
                     {Array.from({ length: Math.max(lineCount, 20) }).map((_, i) => (
                       <div key={i} className="text-xs text-dark-500 leading-6 px-2">
                         {i + 1}
@@ -311,23 +360,39 @@ export default function Analyze() {
                     ))}
                   </div>
 
-                  {/* Textarea */}
-                  <textarea
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value)
-                      setSelectedSample(null)
-                      setError(null)
-                    }}
-                    placeholder={placeholderCode}
-                    className="flex-1 min-h-[500px] p-4 bg-transparent text-dark-100 font-mono text-sm leading-6 resize-none focus:outline-none placeholder-dark-600"
-                    spellCheck={false}
-                  />
+                  {/* Highlighted Layer */}
+                  <div className="relative flex-1 min-h-[500px] bg-white">
+                    <pre
+                      ref={highlightRef}
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 p-4 font-mono text-sm leading-6 whitespace-pre-wrap overflow-auto"
+                    >
+                      {highlightedLines}
+                    </pre>
+                    <textarea
+                      ref={editorRef}
+                      value={code}
+                      onChange={(e) => {
+                        setCode(e.target.value)
+                        setSelectedSample(null)
+                        setError(null)
+                      }}
+                      onScroll={(e) => {
+                        if (highlightRef.current) {
+                          highlightRef.current.scrollTop = e.target.scrollTop
+                          highlightRef.current.scrollLeft = e.target.scrollLeft
+                        }
+                      }}
+                      placeholder={placeholderCode}
+                      className="relative z-10 w-full min-h-[500px] p-4 bg-transparent text-transparent caret-dark-900 font-mono text-sm leading-6 resize-none focus:outline-none placeholder:text-dark-300"
+                      spellCheck={false}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Editor Footer */}
-              <div className="px-4 py-4 border-t border-dark-700/50 bg-dark-800/30">
+              <div className="px-4 py-4 border-t border-dark-100/70 bg-white/90">
                 {/* Error Message */}
                 <AnimatePresence>
                   {error && (
@@ -388,11 +453,69 @@ export default function Analyze() {
                   className="glass-card p-4"
                 >
                   <div className="text-2xl mb-2">{item.icon}</div>
-                  <h4 className="font-semibold text-dark-200 mb-1">{item.title}</h4>
-                  <p className="text-sm text-dark-400">{item.description}</p>
+                  <h4 className="font-semibold text-dark-800 mb-1">{item.title}</h4>
+                  <p className="text-sm text-dark-700">{item.description}</p>
                 </motion.div>
               ))}
             </div>
+
+            {/* Inline Results */}
+            {result && (
+              <div id="analysis-results" className="mt-8">
+                <Card hover={false} className="overflow-hidden">
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-dark-900">Analysis Summary</h3>
+                        <p className="text-sm text-dark-600 mt-1">
+                          {result.summary || 'Backend analysis completed successfully.'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="primary">
+                          {result.risk_level || 'Medium'} Risk
+                        </Badge>
+                        <span className="text-sm text-dark-600">
+                          Score: {Math.round((result.overall_risk_score || 0) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      {(result.vulnerabilities || []).map((vuln) => (
+                        <div key={vuln.type} className="rounded-xl border border-dark-200/40 bg-white/70 px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-dark-900">{vuln.type}</div>
+                              <div className="text-xs text-dark-600 mt-1">
+                                {vuln.description || 'Detected by the backend model.'}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold text-dark-900">
+                                {Math.round((vuln.probability || 0) * 100)}%
+                              </div>
+                              <div className="text-[11px] text-dark-500">Confidence</div>
+                            </div>
+                          </div>
+                          <div className="mt-3 h-2 rounded-full bg-dark-200/40 overflow-hidden">
+                            <div
+                              className="h-full bg-primary-500"
+                              style={{ width: `${Math.round((vuln.probability || 0) * 100)}%` }}
+                            />
+                          </div>
+                          {vuln.affected_lines && vuln.affected_lines.length > 0 && (
+                            <div className="mt-2 text-[11px] text-dark-500">
+                              Lines: {vuln.affected_lines.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

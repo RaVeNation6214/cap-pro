@@ -4,8 +4,6 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import Home from './pages/Home'
 import Analyze from './pages/Analyze'
-import Results from './pages/Results'
-import About from './pages/About'
 
 function App() {
   const location = useLocation()
@@ -18,8 +16,6 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />
             <Route path="/analyze" element={<Analyze />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/about" element={<About />} />
           </Routes>
         </AnimatePresence>
       </main>

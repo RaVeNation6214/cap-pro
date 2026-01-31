@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Shield, Github, Twitter, Heart } from 'lucide-react'
+import { Shield, Github, Heart } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -17,23 +17,20 @@ export default function Footer() {
                 <span className="text-xl font-bold gradient-text">SmartAudit</span>
               </div>
               <p className="text-dark-400 max-w-md">
-                AI-powered smart contract vulnerability detection using Hierarchical
-                Transformer architecture. Secure your blockchain applications with
-                cutting-edge machine learning.
+                Capstone interface for the SmartAudit backend. Run analysis, inspect
+                model confidence, and review vulnerable lines in a single workflow.
               </p>
             </div>
 
             {/* Links */}
             <div>
               <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider mb-4">
-                Resources
+                Project
               </h3>
               <ul className="space-y-2">
-                {['Documentation', 'API Reference', 'Research Paper', 'GitHub'].map((item) => (
+                {['Backend API', 'Model Overview', 'Dataset Notes', 'Evaluation Results'].map((item) => (
                   <li key={item}>
-                    <a href="#" className="text-dark-400 hover:text-primary-400 transition-colors">
-                      {item}
-                    </a>
+                    <span className="text-dark-400">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -61,17 +58,14 @@ export default function Footer() {
             </p>
 
             <div className="flex items-center gap-4">
-              {[Github, Twitter].map((Icon, index) => (
-                <motion.a
-                  key={index}
-                  href="#"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="p-2 rounded-lg bg-dark-800/50 border border-dark-700 text-dark-400 hover:text-primary-400 transition-colors"
-                >
-                  <Icon className="w-5 h-5" />
-                </motion.a>
-              ))}
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg bg-dark-800/50 border border-dark-700 text-dark-400 hover:text-primary-400 transition-colors"
+              >
+                <Github className="w-5 h-5" />
+              </motion.a>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import logging
 import re
 import random
 from typing import List, Dict, Tuple
@@ -714,6 +715,7 @@ contract ERC20token{
             (re.compile(p.regex, re.MULTILINE | re.IGNORECASE), p)
             for p in self.PATTERNS
         ]
+        self.logger = logging.getLogger(__name__)
 
     def analyze(self, code: str) -> AnalysisResult:
         """
@@ -721,10 +723,17 @@ contract ERC20token{
         """
         lines = code.split('\n')
         num_lines = len(lines)
+        self.logger.info("Demo analysis start. lines=%s chars=%s", num_lines, len(code))
 
         # Extract static features
         features = self.feature_extractor.extract(code)
         line_features = self.feature_extractor.extract_line_features(code)
+        self.logger.info(
+            "Feature extraction complete. tx_origin=%s call_value=%s delegatecall=%s",
+            features.has_tx_origin,
+            features.has_call_value,
+            features.has_delegatecall,
+        )
 
         # Find pattern matches
         vuln_scores: Dict[VulnerabilityType, float] = {
@@ -741,10 +750,12 @@ contract ERC20token{
         line_risks: List[LineRisk] = []
 
         # Check each pattern
+        match_counts: Dict[VulnerabilityType, int] = {vt: 0 for vt in VulnerabilityType}
         for compiled_pattern, pattern in self.compiled_patterns:
             for match in compiled_pattern.finditer(code):
                 # Find line number
                 line_num = code[:match.start()].count('\n') + 1
+                match_counts[pattern.vuln_type] += 1
 
                 # Update vulnerability score
                 current_score = vuln_scores[pattern.vuln_type]
@@ -754,6 +765,8 @@ contract ERC20token{
                 # Track affected lines
                 if line_num not in affected_lines[pattern.vuln_type]:
                     affected_lines[pattern.vuln_type].append(line_num)
+
+        self.logger.info("Pattern scan complete. matches=%s", match_counts)
 
         # Calculate line-level risks
         for i, line in enumerate(lines):
@@ -828,6 +841,7 @@ contract ERC20token{
         # Calculate overall risk
         overall_risk = self._calculate_overall_risk(vuln_scores)
         risk_level = self._get_risk_level(overall_risk)
+        self.logger.info("Risk computed. level=%s score=%.4f", risk_level, overall_risk)
 
         # Generate attention weights (simulated)
         attention_weights = self._generate_attention_weights(lines, line_risks)
@@ -836,7 +850,7 @@ contract ERC20token{
         summary = self._generate_summary(vulnerabilities, overall_risk)
         recommendations = self._generate_recommendations(vulnerabilities)
 
-        return AnalysisResult(
+        result = AnalysisResult(
             overall_risk_score=round(overall_risk, 4),
             risk_level=risk_level,
             vulnerabilities=vulnerabilities,
@@ -845,6 +859,13 @@ contract ERC20token{
             summary=summary,
             recommendations=recommendations
         )
+
+        self.logger.info(
+            "Demo analysis end. vulnerabilities=%s",
+            [(v.type, v.probability) for v in vulnerabilities],
+        )
+
+        return result
 
     def _get_confidence(self, probability: float) -> str:
         """Get confidence level from probability."""

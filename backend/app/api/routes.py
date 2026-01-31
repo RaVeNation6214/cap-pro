@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException
 from typing import List
 
@@ -12,6 +13,7 @@ from ..core.config import settings
 from ..services.demo_mode import DemoModeAnalyzer
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Initialize demo analyzer
 demo_analyzer = DemoModeAnalyzer()
@@ -37,6 +39,9 @@ async def analyze_contract(request: AnalyzeRequest) -> AnalysisResult:
                 detail="Contract code is too short. Please provide valid Solidity code."
             )
 
+        logger.info("Analysis request received. code_chars=%s", len(request.code))
+        logger.info("Demo mode=%s", settings.DEMO_MODE)
+
         # Use demo mode or real model based on settings
         if settings.DEMO_MODE:
             result = demo_analyzer.analyze(request.code)
@@ -45,11 +50,19 @@ async def analyze_contract(request: AnalyzeRequest) -> AnalysisResult:
             # For now, fall back to demo mode
             result = demo_analyzer.analyze(request.code)
 
+        logger.info(
+            "Analysis completed. risk_level=%s score=%s vulnerabilities=%s",
+            result.risk_level,
+            result.overall_risk_score,
+            [v.type for v in result.vulnerabilities],
+        )
+
         return result
 
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Analysis failed")
         raise HTTPException(
             status_code=500,
             detail=f"Analysis failed: {str(e)}"

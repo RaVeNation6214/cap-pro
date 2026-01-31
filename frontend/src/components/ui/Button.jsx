@@ -2,10 +2,10 @@ import { motion } from 'framer-motion'
 import { clsx } from 'clsx'
 
 const variants = {
-  primary: 'btn-primary',
-  secondary: 'btn-secondary',
-  ghost: 'px-4 py-2 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800/50 transition-colors',
-  danger: 'px-6 py-3 rounded-xl font-semibold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all',
+  primary: 'px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 focus:ring-2 focus:ring-primary-600/50 focus:outline-none transform hover:scale-105 active:scale-95 transition-all duration-200 ease-out shadow-lg shadow-primary-600/30 hover:shadow-primary-600/40',
+  secondary: 'px-6 py-3 rounded-xl font-semibold bg-white/60 text-dark-800 border border-primary-300 hover:bg-white/80 hover:border-primary-400 focus:ring-2 focus:ring-primary-400/50 focus:outline-none transform hover:scale-105 active:scale-95 transition-all duration-200 ease-out',
+  ghost: 'px-4 py-2 rounded-lg text-dark-700 hover:text-dark-900 hover:bg-white/60 transition-colors',
+  danger: 'px-6 py-3 rounded-xl font-semibold bg-red-500/20 text-red-600 border border-red-500/30 hover:bg-red-500/30 transition-all',
 }
 
 const sizes = {

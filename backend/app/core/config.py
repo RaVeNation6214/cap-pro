@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Model Settings
     MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "model.pt")
-    DEMO_MODE: bool = True  # Set to False when trained model is available
+    DEMO_MODE: bool = False  # Set to False when trained model is available
 
     # Model Architecture
     VOCAB_SIZE: int = 10000
