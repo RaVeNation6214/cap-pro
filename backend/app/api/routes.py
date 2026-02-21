@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException
 
 from .schemas import (
@@ -13,6 +14,7 @@ from ..services.demo_mode import DemoModeAnalyzer
 from ..services.gemini_service import GeminiService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Initialize services (lazy - avoids slow startup)
 _demo_analyzer: DemoModeAnalyzer = None
@@ -66,6 +68,7 @@ async def analyze_contract(request: AnalyzeRequest) -> AnalysisResult:
                 detail="Contract code is too short. Please provide valid Solidity code."
             )
 
+<<<<<<< HEAD
         if not settings.DEMO_MODE:
             # Use trained GNN model
             gnn = get_gnn_service()
@@ -79,11 +82,32 @@ async def analyze_contract(request: AnalyzeRequest) -> AnalysisResult:
         # Demo mode (pattern-based)
         analyzer = get_demo_analyzer()
         result = analyzer.analyze(request.code)
+=======
+        logger.info("Analysis request received. code_chars=%s", len(request.code))
+        logger.info("Demo mode=%s", settings.DEMO_MODE)
+
+        # Use demo mode or real model based on settings
+        if settings.DEMO_MODE:
+            result = demo_analyzer.analyze(request.code)
+        else:
+            # TODO: Implement real model inference
+            # For now, fall back to demo mode
+            result = demo_analyzer.analyze(request.code)
+
+        logger.info(
+            "Analysis completed. risk_level=%s score=%s vulnerabilities=%s",
+            result.risk_level,
+            result.overall_risk_score,
+            [v.type for v in result.vulnerabilities],
+        )
+
+>>>>>>> 7b835fe18c96efb700ebae38d468b68d763db934
         return result
 
     except HTTPException:
         raise
     except Exception as e:
+<<<<<<< HEAD
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
@@ -121,6 +145,12 @@ async def ai_help(request: AIHelpRequest) -> AIHelpResponse:
             response=result["response"],
             status=result["status"],
             model=result["model"],
+=======
+        logger.exception("Analysis failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+>>>>>>> 7b835fe18c96efb700ebae38d468b68d763db934
         )
 
     except HTTPException:

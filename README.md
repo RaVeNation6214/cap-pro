@@ -35,54 +35,16 @@ smart-contract-audit/
 └── README.md
 ```
 
-## Quick Start
+Quick setup and run
+Backend (FastAPI + PyTorch)
+cd /home/maues/Arbeit/cap-pro/backendpython -m venv venvsource venv/bin/activatepip install -r requirements.txtuvicorn app.main:app --reload --port 8000
+API: http://localhost:8000
+Docs: http://localhost:8000/docs
 
-### Prerequisites
 
-- Python 3.9+
-- Node.js 18+
-- npm or yarn
-
-### Backend Setup
-
-```bash
-# Navigate to backend directory
-cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-uvicorn app.main:app --reload --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-- API Documentation: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-### Frontend Setup
-
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
-
-The UI will be available at `http://localhost:5173`
+Frontend (React + Vite)
+cd /home/maues/Arbeit/cap-pro/frontendnpm installnpm run dev
+App: http://localhost:5173
 
 ## Features
 

@@ -16,9 +16,14 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
 
     # Model Settings
+<<<<<<< HEAD
     MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "hybrid_gnn.pt")
     DEMO_MODE: bool = True  # Set to False to use trained model from models/hybrid_gnn.pt
     NUM_CLASSES: int = 5
+=======
+    MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "model.pt")
+    DEMO_MODE: bool = False  # Set to False when trained model is available
+>>>>>>> 7b835fe18c96efb700ebae38d468b68d763db934
 
     # HybridGNN Architecture
     GNN_HIDDEN_DIM: int = 256
