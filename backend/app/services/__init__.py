@@ -1,3 +1,2 @@
-from .demo_mode import DemoModeAnalyzer
+# Services are imported lazily in routes.py to avoid circular imports
 
-__all__ = ["DemoModeAnalyzer"]

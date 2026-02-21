@@ -1,9 +1,9 @@
 import { clsx } from 'clsx'
 
 const variants = {
-  default: 'bg-dark-700 text-dark-200',
-  primary: 'bg-primary-500/20 text-primary-400 border border-primary-500/30',
-  secondary: 'bg-accent-500/20 text-accent-400 border border-accent-500/30',
+  default: 'bg-white/60 text-dark-700 border border-primary-200',
+  primary: 'bg-primary-100 text-primary-700 border border-primary-300',
+  secondary: 'bg-accent-100 text-accent-700 border border-accent-300',
   success: 'bg-green-500/20 text-green-400 border border-green-500/30',
   warning: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
   danger: 'bg-red-500/20 text-red-400 border border-red-500/30',

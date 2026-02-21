@@ -95,13 +95,20 @@ secrets/
 # =========================
 data/
 datasets/
-models/
 checkpoints/
-*.pt
 *.pth
 *.ckpt
 *.onnx
 *.h5
+# Allow the trained model checkpoint (small enough to ship with repo)
+# models/        <- intentionally NOT ignored
+# *.pt           <- intentionally NOT ignored
+# Large raw dataset repos (cloned separately)
+backend/data/raw/
+backend/data/processed/
+backend/data/splits/
+# GNN training log (runtime artifact)
+backend/models/gnn_training.log
 
 # =========================
 # Misc

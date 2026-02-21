@@ -63,3 +63,38 @@ export async function getVulnerabilityClasses() {
 
   return response.json()
 }
+
+/**
+ * Get AI-powered explanation and fix for a vulnerability
+ * @param {string} code - Solidity contract source code
+ * @param {string} issue - Vulnerability type: reentrancy, access_control, arithmetic, unchecked_calls
+ * @returns {Promise<Object>} AI response with explanation and fix
+ */
+export async function getAIHelp(code, issue) {
+  const response = await fetch(`${API_BASE_URL}/ai-help`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, issue }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.detail || 'AI help request failed')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get model architecture information
+ * @returns {Promise<Object>} Model info
+ */
+export async function getModelInfo() {
+  const response = await fetch(`${API_BASE_URL}/model-info`)
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch model info')
+  }
+
+  return response.json()
+}

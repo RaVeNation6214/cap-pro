@@ -16,26 +16,37 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
 
     # Model Settings
-    MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "model.pt")
-    DEMO_MODE: bool = True  # Set to False when trained model is available
+    MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "hybrid_gnn.pt")
+    DEMO_MODE: bool = True  # Set to False to use trained model from models/hybrid_gnn.pt
+    NUM_CLASSES: int = 5
 
-    # Model Architecture
-    VOCAB_SIZE: int = 10000
-    D_MODEL: int = 256
-    N_HEADS: int = 8
-    N_LAYERS: int = 3
-    D_FF: int = 1024
-    MAX_SEQ_LEN: int = 512
-    NUM_CLASSES: int = 4
-    DROPOUT: float = 0.1
+    # HybridGNN Architecture
+    GNN_HIDDEN_DIM: int = 256
+    GNN_HEADS: int = 4
+    GNN_DROPOUT: float = 0.3
+    STATIC_FEATURE_DIM: int = 12
+    GRAPHCODEBERT_MODEL: str = "microsoft/graphcodebert-base"
 
-    # Vulnerability Classes
+    # Dataset paths
+    SMARTBUGS_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "data", "smartbugs")
+    NEWALL_BUGS_PATH: str = os.path.join(
+        os.path.dirname(__file__), "..", "..", "newALLBUGS"
+    )
+
+    # Gemini AI
+    GEMINI_API_KEY: str = ""
+
+    # Vulnerability Classes (order must match training: reentrancy, arithmetic, access_control, unchecked_calls, timestamp)
     VULNERABILITY_CLASSES: List[str] = [
+        "Reentrancy",
         "Arithmetic",
         "Access Control",
         "Unchecked Calls",
-        "Reentrancy"
+        "Timestamp"
     ]
+
+    # Detection thresholds per class
+    DETECTION_THRESHOLDS: List[float] = [0.45, 0.40, 0.45, 0.40, 0.40]
 
     class Config:
         env_file = ".env"

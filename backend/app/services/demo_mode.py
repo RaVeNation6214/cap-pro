@@ -92,6 +92,26 @@ class DemoModeAnalyzer:
             weight=0.2,
             description="Increment/decrement operation"
         ),
+
+        # Timestamp dependency patterns
+        VulnerabilityPattern(
+            regex=r'block\.timestamp',
+            vuln_type=VulnerabilityType.TIMESTAMP,
+            weight=0.6,
+            description="block.timestamp used - miners can manipulate by ~15 seconds"
+        ),
+        VulnerabilityPattern(
+            regex=r'\bnow\b',
+            vuln_type=VulnerabilityType.TIMESTAMP,
+            weight=0.6,
+            description="'now' alias for block.timestamp - timestamp manipulation risk"
+        ),
+        VulnerabilityPattern(
+            regex=r'block\.timestamp\s*==|==\s*block\.timestamp',
+            vuln_type=VulnerabilityType.TIMESTAMP,
+            weight=0.9,
+            description="Exact timestamp comparison - highly exploitable by miners"
+        ),
     ]
 
     # Sample contracts for demo
@@ -728,10 +748,11 @@ contract ERC20token{
 
         # Find pattern matches
         vuln_scores: Dict[VulnerabilityType, float] = {
+            VulnerabilityType.REENTRANCY: 0.0,
             VulnerabilityType.ARITHMETIC: 0.0,
             VulnerabilityType.ACCESS_CONTROL: 0.0,
             VulnerabilityType.UNCHECKED_CALLS: 0.0,
-            VulnerabilityType.REENTRANCY: 0.0,
+            VulnerabilityType.TIMESTAMP: 0.0,
         }
 
         affected_lines: Dict[VulnerabilityType, List[int]] = {
@@ -806,6 +827,17 @@ contract ERC20token{
         if 'msg.sender' in code and 'tx.origin' not in code:
             vuln_scores[VulnerabilityType.ACCESS_CONTROL] *= 0.3
 
+        # Timestamp dependency detection
+        import re as _re
+        if _re.search(r'block\.timestamp|now\b', code):
+            vuln_scores[VulnerabilityType.TIMESTAMP] = max(
+                vuln_scores[VulnerabilityType.TIMESTAMP], 0.65
+            )
+        if _re.search(r'block\.timestamp.*==|==.*block\.timestamp', code):
+            vuln_scores[VulnerabilityType.TIMESTAMP] = max(
+                vuln_scores[VulnerabilityType.TIMESTAMP], 0.85
+            )
+
         # Add some randomness for realism
         for vt in vuln_scores:
             noise = random.uniform(-0.05, 0.05)
@@ -878,6 +910,11 @@ contract ERC20token{
                 "internal state updates, allowing attackers to recursively call back "
                 "into the contract and drain funds."
             ),
+            VulnerabilityType.TIMESTAMP: (
+                "Timestamp dependency vulnerabilities arise when block.timestamp is used "
+                "for critical logic such as randomness or time-locked conditions. Miners "
+                "can manipulate timestamps by up to ~15 seconds, enabling exploitation."
+            ),
         }
         return descriptions.get(vuln_type, "Unknown vulnerability type")
 
@@ -889,6 +926,7 @@ contract ERC20token{
             VulnerabilityType.ACCESS_CONTROL: 0.9,
             VulnerabilityType.UNCHECKED_CALLS: 0.8,
             VulnerabilityType.ARITHMETIC: 0.7,
+            VulnerabilityType.TIMESTAMP: 0.6,
         }
 
         weighted_sum = sum(scores[vt] * weights[vt] for vt in scores)
@@ -1015,6 +1053,13 @@ contract ERC20token{
                     "Consider using unchecked blocks only when overflow is intentional"
                 ])
 
+            elif vuln.type == VulnerabilityType.TIMESTAMP:
+                recommendations.extend([
+                    "Avoid using block.timestamp for randomness or critical timing logic",
+                    "Use block.number instead of block.timestamp for time comparisons",
+                    "For randomness, use a VRF (Verifiable Random Function) like Chainlink VRF"
+                ])
+
         # Remove duplicates while preserving order
         seen = set()
         unique_recommendations = []
@@ -1024,6 +1069,83 @@ contract ERC20token{
                 unique_recommendations.append(rec)
 
         return unique_recommendations[:6]  # Limit to 6 recommendations
+
+    def analyze_with_probs(self, code: str, probs: Dict[str, float]) -> 'AnalysisResult':
+        """
+        Build a full AnalysisResult using GNN model probabilities.
+        Uses the same rich output format as analyze(), but with real model scores.
+        """
+        lines = code.split('\n')
+
+        # Map string class names to VulnerabilityType enum
+        class_map = {
+            "reentrancy": VulnerabilityType.REENTRANCY,
+            "arithmetic": VulnerabilityType.ARITHMETIC,
+            "access_control": VulnerabilityType.ACCESS_CONTROL,
+            "unchecked_calls": VulnerabilityType.UNCHECKED_CALLS,
+            "timestamp": VulnerabilityType.TIMESTAMP,
+        }
+
+        vuln_scores: Dict[VulnerabilityType, float] = {
+            class_map[k]: float(v) for k, v in probs.items() if k in class_map
+        }
+
+        # Use pattern matching only for line-level attribution
+        affected_lines: Dict[VulnerabilityType, List[int]] = {
+            vt: [] for vt in VulnerabilityType
+        }
+        for compiled_pattern, pattern in self.compiled_patterns:
+            for match in compiled_pattern.finditer(code):
+                line_num = code[:match.start()].count('\n') + 1
+                if line_num not in affected_lines[pattern.vuln_type]:
+                    affected_lines[pattern.vuln_type].append(line_num)
+
+        # Line-level risks based on GNN scores + pattern attribution
+        line_risks = []
+        for i, line in enumerate(lines):
+            line_num = i + 1
+            risk_score = 0.0
+            for vt in VulnerabilityType:
+                if line_num in affected_lines[vt]:
+                    risk_score = max(risk_score, vuln_scores.get(vt, 0.0))
+            line_feature = self.feature_extractor.extract_line_features(line + '\n')
+            if line_feature and line_feature[0]['has_call'] > 0:
+                risk_score = max(risk_score, 0.5)
+            if line_feature and line_feature[0]['has_tx_origin'] > 0:
+                risk_score = max(risk_score, 0.75)
+            line_risks.append(LineRisk(
+                line_number=line_num,
+                content=line,
+                risk_score=round(risk_score, 4),
+                is_vulnerable=risk_score > 0.5
+            ))
+
+        # Build vulnerability predictions
+        vulnerabilities = []
+        for vt in VulnerabilityType:
+            prob = vuln_scores.get(vt, 0.05)
+            vulnerabilities.append(VulnerabilityPrediction(
+                type=vt,
+                probability=round(prob, 4),
+                confidence=self._get_confidence(prob),
+                description=self._get_description(vt, prob),
+                affected_lines=sorted(affected_lines[vt])
+            ))
+
+        overall_risk = self._calculate_overall_risk(vuln_scores)
+        attention_weights = self._generate_attention_weights(lines, line_risks)
+        summary = self._generate_summary(vulnerabilities, overall_risk)
+        recommendations = self._generate_recommendations(vulnerabilities)
+
+        return AnalysisResult(
+            overall_risk_score=round(overall_risk, 4),
+            risk_level=self._get_risk_level(overall_risk),
+            vulnerabilities=vulnerabilities,
+            line_risks=line_risks,
+            attention_weights=attention_weights,
+            summary=summary,
+            recommendations=recommendations
+        )
 
     def get_sample_contracts(self) -> List[SampleContract]:
         """Return sample contracts for demo."""

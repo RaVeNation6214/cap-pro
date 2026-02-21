@@ -5,10 +5,11 @@ from enum import Enum
 
 class VulnerabilityType(str, Enum):
     """Vulnerability type enumeration."""
+    REENTRANCY = "Reentrancy"
     ARITHMETIC = "Arithmetic"
     ACCESS_CONTROL = "Access Control"
     UNCHECKED_CALLS = "Unchecked Calls"
-    REENTRANCY = "Reentrancy"
+    TIMESTAMP = "Timestamp"
 
 
 class AnalyzeRequest(BaseModel):
@@ -67,7 +68,29 @@ class SampleContractsResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+    model_config = {"protected_namespaces": ()}
+
     status: str
     version: str
     demo_mode: bool
     model_loaded: bool
+    graphcodebert_loaded: bool = False
+    gnn_available: bool = False
+    slither_available: bool = False
+    gemini_available: bool = False
+
+
+class AIHelpRequest(BaseModel):
+    """Request for AI-powered vulnerability help."""
+    code: str = Field(..., description="Solidity contract source code")
+    issue: str = Field(
+        ...,
+        description="Vulnerability type: reentrancy, access_control, arithmetic, unchecked_calls"
+    )
+
+
+class AIHelpResponse(BaseModel):
+    """Response from AI assistant."""
+    response: str = Field(..., description="AI-generated explanation and fix (markdown)")
+    status: str = Field(..., description="success, fallback, or error")
+    model: str = Field(..., description="AI model used")
