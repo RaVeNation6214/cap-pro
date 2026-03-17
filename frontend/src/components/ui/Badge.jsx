@@ -1,17 +1,17 @@
 import { clsx } from 'clsx'
 
 const variants = {
-  default: 'bg-white/60 text-dark-700 border border-primary-200',
+  default: 'bg-white/80 text-slate-700 border border-slate-300',
   primary: 'bg-primary-100 text-primary-700 border border-primary-300',
   secondary: 'bg-accent-100 text-accent-700 border border-accent-300',
-  success: 'bg-green-500/20 text-green-400 border border-green-500/30',
-  warning: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
-  danger: 'bg-red-500/20 text-red-400 border border-red-500/30',
-  safe: 'risk-safe',
-  low: 'risk-low',
-  medium: 'risk-medium',
-  high: 'risk-high',
-  critical: 'risk-critical',
+  success: 'bg-green-100 text-green-800 border border-green-300',
+  warning: 'bg-amber-100 text-amber-800 border border-amber-300',
+  danger: 'bg-red-100 text-red-800 border border-red-300',
+  safe: 'bg-green-100 text-green-800 border border-green-300',
+  low: 'bg-lime-100 text-lime-800 border border-lime-300',
+  medium: 'bg-amber-100 text-amber-800 border border-amber-300',
+  high: 'bg-orange-100 text-orange-800 border border-orange-300',
+  critical: 'bg-red-100 text-red-800 border border-red-300',
 }
 
 const sizes = {

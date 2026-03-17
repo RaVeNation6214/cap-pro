@@ -37,7 +37,7 @@ smart-contract-audit/
 
 Quick setup and run
 Backend (FastAPI + PyTorch)
-cd /home/maues/Arbeit/cap-pro/backendpython -m venv venvsource venv/bin/activatepip install -r requirements.txtuvicorn app.main:app --reload --port 8000
+cd /home/maues/Arbeit/cap-pro/backend python -m venv venvsource venv/bin/activatepip install -r requirements.txtuvicorn app.main:app --reload --port 8000
 API: http://localhost:8000
 Docs: http://localhost:8000/docs
 

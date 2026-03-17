@@ -36,13 +36,13 @@ import {
 import { Button, Card, CardContent, Badge, Progress } from '../components/ui'
 import { getAIHelp } from '../services/api'
 
-// Risk level colors and icons
+// Risk level colors and icons (hex for reliable contrast)
 const riskConfig = {
-  Safe: { color: 'risk-safe', bgColor: 'bg-risk-safe', icon: CheckCircle, gradient: 'from-green-500 to-emerald-500' },
-  Low: { color: 'risk-low', bgColor: 'bg-risk-low', icon: Info, gradient: 'from-lime-500 to-green-500' },
-  Medium: { color: 'risk-medium', bgColor: 'bg-risk-medium', icon: AlertTriangle, gradient: 'from-yellow-500 to-orange-500' },
-  High: { color: 'risk-high', bgColor: 'bg-risk-high', icon: AlertTriangle, gradient: 'from-orange-500 to-red-500' },
-  Critical: { color: 'risk-critical', bgColor: 'bg-risk-critical', icon: XCircle, gradient: 'from-red-500 to-rose-600' },
+  Safe: { color: 'risk-safe', bgColor: 'bg-risk-safe', hex: '#16a34a', icon: CheckCircle, gradient: 'from-green-500 to-emerald-500' },
+  Low: { color: 'risk-low', bgColor: 'bg-risk-low', hex: '#65a30d', icon: Info, gradient: 'from-lime-500 to-green-500' },
+  Medium: { color: 'risk-medium', bgColor: 'bg-risk-medium', hex: '#ca8a04', icon: AlertTriangle, gradient: 'from-yellow-500 to-orange-500' },
+  High: { color: 'risk-high', bgColor: 'bg-risk-high', hex: '#ea580c', icon: AlertTriangle, gradient: 'from-orange-500 to-red-500' },
+  Critical: { color: 'risk-critical', bgColor: 'bg-risk-critical', hex: '#dc2626', icon: XCircle, gradient: 'from-red-500 to-rose-600' },
 }
 
 // Vulnerability type icons
@@ -61,7 +61,7 @@ const vulnToIssueKey = {
   'Reentrancy': 'reentrancy',
 }
 
-// Simple markdown renderer for AI responses
+// Simple markdown renderer for AI responses (light, readable)
 function MarkdownBlock({ content }) {
   const lines = content.split('\n')
   const elements = []
@@ -75,11 +75,11 @@ function MarkdownBlock({ content }) {
       if (inCodeBlock) {
         elements.push(
           <div key={i} className="relative group my-3">
-            <div className="flex items-center justify-between bg-dark-900 px-3 py-1.5 rounded-t-lg border border-dark-700">
-              <span className="text-xs text-dark-400 font-mono">{codeLang || 'solidity'}</span>
+            <div className="flex items-center justify-between bg-slate-200 px-3 py-1.5 rounded-t-lg border border-slate-300">
+              <span className="text-xs text-slate-600 font-mono">{codeLang || 'solidity'}</span>
             </div>
-            <pre className="bg-dark-950 border border-t-0 border-dark-700 rounded-b-lg p-4 overflow-x-auto">
-              <code className="text-sm text-green-300 font-mono">{codeLines.join('\n')}</code>
+            <pre className="bg-slate-100 border border-t-0 border-slate-300 rounded-b-lg p-4 overflow-x-auto">
+              <code className="text-sm text-slate-800 font-mono">{codeLines.join('\n')}</code>
             </pre>
           </div>
         )
@@ -93,22 +93,22 @@ function MarkdownBlock({ content }) {
     } else if (inCodeBlock) {
       codeLines.push(line)
     } else if (line.startsWith('## ')) {
-      elements.push(<h2 key={i} className="text-lg font-bold text-primary-300 mt-4 mb-2">{line.slice(3)}</h2>)
+      elements.push(<h2 key={i} className="text-lg font-bold text-slate-900 mt-4 mb-2">{line.slice(3)}</h2>)
     } else if (line.startsWith('### ')) {
-      elements.push(<h3 key={i} className="text-base font-semibold text-dark-200 mt-3 mb-1">{line.slice(4)}</h3>)
+      elements.push(<h3 key={i} className="text-base font-semibold text-slate-800 mt-3 mb-1">{line.slice(4)}</h3>)
     } else if (line.startsWith('**') && line.endsWith('**')) {
-      elements.push(<p key={i} className="font-semibold text-dark-100 my-1">{line.slice(2, -2)}</p>)
+      elements.push(<p key={i} className="font-semibold text-slate-900 my-1">{line.slice(2, -2)}</p>)
     } else if (line.startsWith('- ')) {
       elements.push(
         <div key={i} className="flex items-start gap-2 my-1">
-          <span className="text-primary-400 mt-1 flex-shrink-0">•</span>
-          <span className="text-dark-300 text-sm">{line.slice(2)}</span>
+          <span className="text-indigo-500 mt-1 flex-shrink-0">•</span>
+          <span className="text-slate-700 text-sm">{line.slice(2)}</span>
         </div>
       )
     } else if (line.trim() === '') {
       elements.push(<div key={i} className="my-1" />)
     } else {
-      elements.push(<p key={i} className="text-dark-300 text-sm my-1">{line}</p>)
+      elements.push(<p key={i} className="text-slate-700 text-sm my-1">{line}</p>)
     }
   }
 
@@ -161,8 +161,8 @@ function RiskGauge({ score, level }) {
           transition={{ delay: 0.5, type: 'spring' }}
           className="flex items-center justify-center gap-2"
         >
-          <Icon className={`w-6 h-6 text-${config.color}`} />
-          <span className={`text-3xl font-bold text-${config.color}`}>
+          <Icon className="w-6 h-6" style={{ color: config.hex }} />
+          <span className="text-3xl font-bold text-slate-900" style={{ color: config.hex }}>
             {(score * 100).toFixed(0)}%
           </span>
         </motion.div>
@@ -226,21 +226,21 @@ function VulnerabilityCard({ vuln, index, code, onAIHelp }) {
                 <Icon className={`w-5 h-5 ${iconColor}`} />
               </div>
               <div>
-                <h4 className="font-semibold text-dark-100">{vuln.type}</h4>
+                <h4 className="font-semibold text-slate-900">{vuln.type}</h4>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={variant} size="sm">{vuln.confidence} Confidence</Badge>
-                  {vuln.affected_lines.length > 0 && (
-                    <span className="text-xs text-dark-400">Lines: {vuln.affected_lines.join(', ')}</span>
+                  {vuln.affected_lines?.length > 0 && (
+                    <span className="text-xs text-slate-600">Lines: {vuln.affected_lines.join(', ')}</span>
                   )}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="text-2xl font-bold text-dark-100">{(vuln.probability * 100).toFixed(0)}%</div>
-                <div className="text-xs text-dark-400">Probability</div>
+                <div className="text-2xl font-bold text-slate-900">{(vuln.probability * 100).toFixed(0)}%</div>
+                <div className="text-xs text-slate-600">Probability</div>
               </div>
-              {isExpanded ? <ChevronUp className="w-5 h-5 text-dark-400" /> : <ChevronDown className="w-5 h-5 text-dark-400" />}
+              {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
             </div>
           </div>
 
@@ -253,8 +253,8 @@ function VulnerabilityCard({ vuln, index, code, onAIHelp }) {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 pt-4 border-t border-dark-700/50">
-                  <p className="text-dark-400 text-sm mb-4">{vuln.description}</p>
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <p className="text-slate-700 text-sm mb-4">{vuln.description}</p>
                   <Progress value={vuln.probability * 100} variant={variant} showLabel label="Detection Confidence" />
 
                   {/* AI Help button - only for detected vulns */}
@@ -369,23 +369,23 @@ function AIAssistantPanel({ code, vulnerabilities }) {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-dark-100 flex items-center gap-2">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                 AI Security Assistant
-                <Sparkles className="w-4 h-4 text-violet-400" />
+                <Sparkles className="w-4 h-4 text-violet-500" />
               </h3>
-              <p className="text-xs text-dark-400">Powered by Google Gemini 1.5 Flash</p>
+              <p className="text-xs text-slate-600">Powered by Google Gemini 1.5 Flash</p>
             </div>
           </div>
 
           {detectedVulns.length === 0 ? (
-            <div className="text-center py-8 text-dark-400">
-              <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400 opacity-50" />
+            <div className="text-center py-8 text-slate-600">
+              <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
               <p>No significant vulnerabilities detected.</p>
               <p className="text-xs mt-1">Great job writing secure code!</p>
             </div>
           ) : (
             <div>
-              <p className="text-dark-400 text-sm mb-3">
+              <p className="text-slate-700 text-sm mb-3">
                 Select a vulnerability to get AI-powered explanation and fix:
               </p>
               <div className="space-y-2">
@@ -401,13 +401,13 @@ function AIAssistantPanel({ code, vulnerabilities }) {
                       disabled={loading}
                       className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
                         isSelected
-                          ? 'border-violet-500/50 bg-violet-500/10'
-                          : 'border-dark-700 bg-dark-800/50 hover:border-dark-600'
+                          ? 'border-violet-400 bg-violet-50'
+                          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-violet-400' : 'text-dark-400'}`} />
-                        <span className={`text-sm font-medium ${isSelected ? 'text-violet-300' : 'text-dark-200'}`}>
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-violet-600' : 'text-slate-500'}`} />
+                        <span className={`text-sm font-medium ${isSelected ? 'text-violet-800' : 'text-slate-800'}`}>
                           {vuln.type}
                         </span>
                         <Badge variant={vuln.probability >= 0.6 ? 'critical' : 'medium'} size="sm">
@@ -416,9 +416,9 @@ function AIAssistantPanel({ code, vulnerabilities }) {
                       </div>
                       <div className="flex items-center gap-2">
                         {loading && isSelected && (
-                          <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
                         )}
-                        <Send className="w-3 h-3 text-dark-400" />
+                        <Send className="w-3 h-3 text-slate-500" />
                       </div>
                     </motion.button>
                   )
@@ -440,16 +440,16 @@ function AIAssistantPanel({ code, vulnerabilities }) {
             <Card hover={false}>
               <CardContent>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-violet-400" />
+                  <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-violet-600" />
                   </div>
-                  <span className="text-dark-300 text-sm">Analyzing {selectedVuln}...</span>
+                  <span className="text-slate-700 text-sm">Analyzing {selectedVuln}...</span>
                 </div>
                 <div className="space-y-2">
                   {[100, 80, 60, 90].map((w, i) => (
                     <motion.div
                       key={i}
-                      className="h-3 bg-dark-700 rounded"
+                      className="h-3 bg-slate-200 rounded"
                       style={{ width: `${w}%` }}
                       animate={{ opacity: [0.4, 1, 0.4] }}
                       transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
@@ -490,28 +490,28 @@ function AIAssistantPanel({ code, vulnerabilities }) {
                       <Cpu className="w-3.5 h-3.5 text-white" />
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-dark-200">{selectedVuln} Analysis</span>
+                      <span className="text-sm font-medium text-slate-800">{selectedVuln} Analysis</span>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        <span className="text-xs text-dark-400">{aiResponse.model}</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <span className="text-xs text-slate-600">{aiResponse.model}</span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={handleCopy}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-dark-700 hover:bg-dark-600 text-dark-300 text-xs transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs transition-colors"
                   >
-                    {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                    {copied ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
 
-                <div className="bg-dark-900/50 rounded-xl p-4 border border-dark-700/50 max-h-[500px] overflow-y-auto">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[500px] overflow-y-auto">
                   <MarkdownBlock content={aiResponse.response} />
                 </div>
 
                 {aiResponse.status === 'fallback' && (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-dark-400">
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
                     <Info className="w-3 h-3" />
                     <span>Using static suggestions. Set GEMINI_API_KEY for AI-powered analysis.</span>
                   </div>
@@ -547,10 +547,10 @@ export default function Results() {
 
   if (!result) {
     return (
-      <div className="pt-24 pb-12 min-h-screen flex items-center justify-center">
+      <div className="pt-24 pb-12 min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4" />
-          <p className="text-dark-400">Loading results...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4" />
+          <p className="text-slate-600">Loading results...</p>
         </div>
       </div>
     )
@@ -569,7 +569,7 @@ export default function Results() {
   ]
 
   return (
-    <div className="pt-24 pb-12 min-h-screen">
+    <div className="pt-24 pb-12 min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -582,8 +582,8 @@ export default function Results() {
               <Button variant="ghost" icon={ArrowLeft}>Back</Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-dark-100">Analysis Results</h1>
-              <p className="text-dark-400 mt-1">Hybrid GNN + GraphCodeBERT detection complete</p>
+              <h1 className="text-3xl font-bold text-slate-900">Analysis Results</h1>
+              <p className="text-slate-600 mt-1">Hybrid GNN + GraphCodeBERT detection complete</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -620,7 +620,7 @@ export default function Results() {
             {/* Risk Score Card */}
             <Card hover={false}>
               <CardContent className="text-center py-8">
-                <h3 className="text-lg font-semibold text-dark-200 mb-6">Overall Risk Score</h3>
+                <h3 className="text-lg font-semibold text-slate-800 mb-6">Overall Risk Score</h3>
                 <RiskGauge score={result.overall_risk_score} level={result.risk_level} />
               </CardContent>
             </Card>
@@ -628,15 +628,15 @@ export default function Results() {
             {/* Probability Chart */}
             <Card hover={false}>
               <CardContent>
-                <h3 className="text-lg font-semibold text-dark-200 mb-4">Vulnerability Probabilities</h3>
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">Vulnerability Probabilities</h3>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} layout="vertical">
-                      <XAxis type="number" domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 12 }} />
-                      <YAxis type="category" dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} width={80} />
+                      <XAxis type="number" domain={[0, 100]} tick={{ fill: '#475569', fontSize: 12 }} />
+                      <YAxis type="category" dataKey="name" tick={{ fill: '#475569', fontSize: 12 }} width={80} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                        labelStyle={{ color: '#f1f5f9' }}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a' }}
+                        labelStyle={{ color: '#0f172a' }}
                       />
                       <Bar dataKey="probability" radius={[0, 4, 4, 0]}>
                         {chartData.map((entry, index) => (
@@ -652,21 +652,21 @@ export default function Results() {
             {/* Summary */}
             <Card hover={false}>
               <CardContent>
-                <h3 className="text-lg font-semibold text-dark-200 mb-3">Summary</h3>
-                <p className="text-dark-400 text-sm">{result.summary}</p>
+                <h3 className="text-lg font-semibold text-slate-800 mb-3">Summary</h3>
+                <p className="text-slate-700 text-sm leading-relaxed">{result.summary}</p>
               </CardContent>
             </Card>
 
             {/* Model Info Badge */}
-            <Card hover={false} className="border-violet-500/20 bg-violet-500/5">
+            <Card hover={false} className="border-violet-200 bg-violet-50/80">
               <CardContent className="py-3">
-                <div className="flex items-center gap-2 text-xs text-dark-400">
-                  <Cpu className="w-4 h-4 text-violet-400" />
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <Cpu className="w-4 h-4 text-violet-600" />
                   <span>Hybrid GNN + GraphCodeBERT</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {['CFG Builder', 'GAT Layers', 'Static Features'].map(c => (
-                    <span key={c} className="text-xs px-2 py-0.5 bg-dark-700/50 rounded-full text-dark-400">{c}</span>
+                    <span key={c} className="text-xs px-2 py-0.5 bg-slate-200/80 rounded-full text-slate-700">{c}</span>
                   ))}
                 </div>
               </CardContent>
@@ -689,15 +689,15 @@ export default function Results() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                     activeTab === tab.id
                       ? tab.id === 'ai'
-                        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-                        : 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                      : 'bg-dark-800/50 text-dark-400 hover:text-dark-200'
+                        ? 'bg-violet-100 text-violet-700 border border-violet-300'
+                        : 'bg-indigo-100 text-indigo-700 border border-indigo-300'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-200'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
                   {tab.label}
                   {tab.id === 'ai' && (
-                    <span className="text-xs px-1.5 py-0.5 bg-violet-500/20 text-violet-300 rounded-full">
+                    <span className="text-xs px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded-full">
                       New
                     </span>
                   )}
@@ -728,11 +728,11 @@ export default function Results() {
                     />
                   ))}
 
-                  {result.recommendations.length > 0 && (
+                  {result.recommendations?.length > 0 && (
                     <Card hover={false}>
                       <CardContent>
-                        <h3 className="text-lg font-semibold text-dark-200 mb-4 flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-primary-400" />
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-indigo-500" />
                           Recommendations
                         </h3>
                         <ul className="space-y-3">
@@ -744,8 +744,8 @@ export default function Results() {
                               transition={{ delay: index * 0.1 }}
                               className="flex items-start gap-3"
                             >
-                              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                              <span className="text-dark-300 text-sm">{rec}</span>
+                              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                              <span className="text-slate-700 text-sm">{rec}</span>
                             </motion.li>
                           ))}
                         </ul>
@@ -765,19 +765,19 @@ export default function Results() {
                   <Card hover={false}>
                     <CardContent>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-dark-200">Attention Heatmap</h3>
+                        <h3 className="text-lg font-semibold text-slate-800">Attention Heatmap</h3>
                         <div className="flex items-center gap-4 text-xs">
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded bg-risk-safe" />
-                            <span className="text-dark-400">Safe</span>
+                            <span className="text-slate-600">Safe</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded bg-risk-medium" />
-                            <span className="text-dark-400">Medium</span>
+                            <span className="text-slate-600">Medium</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded bg-risk-critical" />
-                            <span className="text-dark-400">Critical</span>
+                            <span className="text-slate-600">Critical</span>
                           </div>
                         </div>
                       </div>

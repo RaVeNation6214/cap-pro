@@ -4,12 +4,13 @@ Maps detected vulnerabilities to severity, explanations, and fix suggestions.
 """
 from typing import Dict, Optional
 
-# Confidence thresholds for detection
+# Confidence thresholds for detection (must match model's 5 classes)
 THRESHOLDS = {
     "reentrancy": 0.55,
     "access_control": 0.55,
     "arithmetic": 0.50,
     "unchecked_calls": 0.50,
+    "timestamp": 0.50,
 }
 
 # Detailed vulnerability information
@@ -119,6 +120,27 @@ SUGGESTIONS: Dict[str, Dict[str, str]] = {
             "https://docs.openzeppelin.com/contracts/4.x/api/utils#Address",
         ],
     },
+    "timestamp": {
+        "severity": "Medium",
+        "explanation": (
+            "Timestamp dependency: block.timestamp (or 'now') is used for critical logic. "
+            "Miners can manipulate block.timestamp by up to ~15 seconds, enabling "
+            "front-running or manipulation of time-based conditions and randomness."
+        ),
+        "suggestion": (
+            "Avoid block.timestamp for randomness. Use block.number for time windows. "
+            "For randomness use a VRF (e.g. Chainlink). Document tolerance for time skew."
+        ),
+        "fix_example": (
+            "// Prefer block number for intervals:\n"
+            "require(block.number >= lastActionBlock + 100, 'Too soon');\n\n"
+            "// For randomness use VRF, not keccak256(block.timestamp, ...)"
+        ),
+        "references": [
+            "https://swcregistry.io/docs/SWC-116",
+            "https://docs.chain.link/vrf",
+        ],
+    },
 }
 
 
@@ -127,7 +149,7 @@ def get_suggestion(vuln_type: str) -> Dict[str, str]:
     Get suggestion details for a vulnerability type.
 
     Args:
-        vuln_type: One of 'reentrancy', 'access_control', 'arithmetic', 'unchecked_calls'
+        vuln_type: One of 'reentrancy', 'access_control', 'arithmetic', 'unchecked_calls', 'timestamp'
 
     Returns:
         Dict with severity, explanation, suggestion, fix_example, references

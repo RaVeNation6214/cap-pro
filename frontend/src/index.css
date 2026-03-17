@@ -6,3 +6,29 @@
 * {
   font-family: "Poppins", sans-serif;
 }
+
+/* Results page: code heatmap - readable on light background */
+.code-editor {
+  @apply rounded-lg border border-slate-200 bg-slate-50 font-mono text-sm;
+}
+.code-line {
+  @apply flex items-center gap-3 px-4 py-1 border-b border-slate-100 last:border-b-0;
+}
+.code-line-number {
+  @apply w-8 flex-shrink-0 text-right text-slate-500 text-xs select-none;
+}
+.code-line-content {
+  @apply flex-1 text-slate-800 whitespace-pre;
+}
+.code-line.line-risk-low {
+  @apply bg-amber-50 border-l-2 border-l-amber-400;
+}
+.code-line.line-risk-medium {
+  @apply bg-orange-50 border-l-2 border-l-orange-500;
+}
+.code-line.line-risk-high {
+  @apply bg-red-50 border-l-2 border-l-red-500;
+}
+.code-line.line-risk-critical {
+  @apply bg-red-100 border-l-2 border-l-red-600;
+}

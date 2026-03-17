@@ -32,15 +32,15 @@ export default function Progress({
     <div className={clsx('w-full', className)}>
       {(showLabel || label) && (
         <div className="flex justify-between mb-1.5">
-          <span className="text-sm text-dark-300">{label}</span>
+          <span className="text-sm text-slate-600">{label}</span>
           {showLabel && (
-            <span className="text-sm font-medium text-dark-200">
+            <span className="text-sm font-medium text-slate-800">
               {percentage.toFixed(0)}%
             </span>
           )}
         </div>
       )}
-      <div className={clsx('w-full bg-dark-800 rounded-full overflow-hidden', heights[size])}>
+      <div className={clsx('w-full bg-slate-200 rounded-full overflow-hidden', heights[size])}>
         <motion.div
           initial={animate ? { width: 0 } : false}
           animate={{ width: `${percentage}%` }}
@@ -57,7 +57,7 @@ export function MultiProgress({ segments, className }) {
 
   return (
     <div className={clsx('w-full', className)}>
-      <div className="h-3 bg-dark-800 rounded-full overflow-hidden flex">
+      <div className="h-3 bg-slate-200 rounded-full overflow-hidden flex">
         {segments.map((segment, index) => (
           <motion.div
             key={index}
@@ -74,7 +74,7 @@ export function MultiProgress({ segments, className }) {
           {segments.map((segment, index) => (
             <div key={index} className="flex items-center gap-2">
               <div className={clsx('w-3 h-3 rounded-full', colorVariants[segment.variant || 'default'])} />
-              <span className="text-sm text-dark-400">{segment.label}</span>
+              <span className="text-sm text-slate-600">{segment.label}</span>
             </div>
           ))}
         </div>
