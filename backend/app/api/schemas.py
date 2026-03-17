@@ -1,10 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from enum import Enum
 
 
 class VulnerabilityType(str, Enum):
-    """Vulnerability type enumeration."""
     REENTRANCY = "Reentrancy"
     ARITHMETIC = "Arithmetic"
     ACCESS_CONTROL = "Access Control"
@@ -13,47 +12,90 @@ class VulnerabilityType(str, Enum):
 
 
 class AnalyzeRequest(BaseModel):
-    """Request schema for contract analysis."""
-    code: str = Field(..., min_length=1, description="Solidity contract source code")
+    code: str = Field(..., min_length=1)
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "code": "pragma solidity ^0.8.0;\n\ncontract Vulnerable {\n    mapping(address => uint) balances;\n    \n    function withdraw() public {\n        uint amount = balances[msg.sender];\n        (bool success, ) = msg.sender.call{value: amount}(\"\");\n        require(success);\n        balances[msg.sender] = 0;\n    }\n}"
-            }
+            "example": {"code": "pragma solidity ^0.8.0;\ncontract Vulnerable {}"}
         }
 
 
 class LineRisk(BaseModel):
-    """Risk information for a single line of code."""
-    line_number: int = Field(..., ge=1, description="Line number (1-indexed)")
-    content: str = Field(..., description="Line content")
-    risk_score: float = Field(..., ge=0, le=1, description="Risk score for this line")
-    is_vulnerable: bool = Field(default=False, description="Whether this line is flagged as vulnerable")
+    line_number: int = Field(..., ge=1)
+    content: str
+    risk_score: float = Field(..., ge=0, le=1)
+    is_vulnerable: bool = False
 
 
 class VulnerabilityPrediction(BaseModel):
-    """Prediction for a single vulnerability type."""
     type: VulnerabilityType
-    probability: float = Field(..., ge=0, le=1, description="Probability of vulnerability presence")
-    confidence: str = Field(..., description="Confidence level: Low, Medium, High")
-    description: str = Field(..., description="Description of the vulnerability")
-    affected_lines: List[int] = Field(default_factory=list, description="Lines affected by this vulnerability")
+    probability: float = Field(..., ge=0, le=1)
+    confidence: str
+    description: str
+    affected_lines: List[int] = Field(default_factory=list)
+
+
+class CFGNode(BaseModel):
+    id: str
+    label: str
+    node_type: str
+    risk_score: float = 0.0
+    attention_weight: float = 0.0
+    lines: List[int] = Field(default_factory=list)
+    vuln_types: List[str] = Field(default_factory=list)
+
+
+class CFGEdge(BaseModel):
+    source: str
+    target: str
+    edge_type: str = "control"
+
+
+class FunctionMetric(BaseModel):
+    name: str
+    risk_score: float
+    top_vuln: str
+    gat_score: float
+    loc: int
+    vulnerability_count: int
+
+
+class SlitherFinding(BaseModel):
+    check: str
+    impact: str
+    confidence: str
+    description: str
+    lines: List[int] = Field(default_factory=list)
+
+
+class SlitherComparison(BaseModel):
+    slither_available: bool
+    slither_findings: List[SlitherFinding] = Field(default_factory=list)
+    model_findings: List[str] = Field(default_factory=list)
+    agreement: List[str] = Field(default_factory=list)
+    model_only: List[str] = Field(default_factory=list)
+    slither_only: List[str] = Field(default_factory=list)
+    winner: str = "model"
 
 
 class AnalysisResult(BaseModel):
-    """Complete analysis result."""
-    overall_risk_score: float = Field(..., ge=0, le=1, description="Overall contract risk score")
-    risk_level: str = Field(..., description="Risk level: Safe, Low, Medium, High, Critical")
-    vulnerabilities: List[VulnerabilityPrediction] = Field(..., description="Detected vulnerabilities")
-    line_risks: List[LineRisk] = Field(..., description="Per-line risk analysis")
-    attention_weights: List[float] = Field(..., description="Attention weights for each code window")
-    summary: str = Field(..., description="Summary of the analysis")
-    recommendations: List[str] = Field(default_factory=list, description="Security recommendations")
+    overall_risk_score: float = Field(..., ge=0, le=1)
+    risk_level: str
+    vulnerabilities: List[VulnerabilityPrediction]
+    line_risks: List[LineRisk]
+    attention_weights: List[float]
+    summary: str
+    recommendations: List[str] = Field(default_factory=list)
+    cfg_nodes: List[CFGNode] = Field(default_factory=list)
+    cfg_edges: List[CFGEdge] = Field(default_factory=list)
+    radar_data: List[Dict[str, Any]] = Field(default_factory=list)
+    function_metrics: List[FunctionMetric] = Field(default_factory=list)
+    slither_comparison: Optional[SlitherComparison] = None
+    contract_address: Optional[str] = None
+    chain: Optional[str] = None
 
 
 class SampleContract(BaseModel):
-    """Sample contract for demo purposes."""
     id: str
     name: str
     description: str
@@ -62,12 +104,10 @@ class SampleContract(BaseModel):
 
 
 class SampleContractsResponse(BaseModel):
-    """Response containing sample contracts."""
     contracts: List[SampleContract]
 
 
 class HealthResponse(BaseModel):
-    """Health check response."""
     model_config = {"protected_namespaces": ()}
 
     status: str
@@ -81,16 +121,58 @@ class HealthResponse(BaseModel):
 
 
 class AIHelpRequest(BaseModel):
-    """Request for AI-powered vulnerability help."""
-    code: str = Field(..., description="Solidity contract source code")
-    issue: str = Field(
-        ...,
-        description="Vulnerability type: reentrancy, access_control, arithmetic, unchecked_calls"
-    )
+    code: str
+    issue: str
 
 
 class AIHelpResponse(BaseModel):
-    """Response from AI assistant."""
-    response: str = Field(..., description="AI-generated explanation and fix (markdown)")
-    status: str = Field(..., description="success, fallback, or error")
-    model: str = Field(..., description="AI model used")
+    response: str
+    status: str
+    model: str
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    contract_context: Optional[str] = None
+    analysis_context: Optional[str] = None
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    model: str
+    status: str
+
+
+class SlitherRequest(BaseModel):
+    code: str
+
+
+class SlitherResponse(BaseModel):
+    available: bool
+    findings: List[SlitherFinding] = Field(default_factory=list)
+    raw_output: str = ""
+    error: Optional[str] = None
+
+
+class MythrilFinding(BaseModel):
+    swc: str
+    title: str
+    severity: str
+    confidence: str
+    description: str
+    lines: List[int] = Field(default_factory=list)
+
+
+class MythrilRequest(BaseModel):
+    code: str
+
+
+class MythrilResponse(BaseModel):
+    available: bool
+    findings: List[MythrilFinding] = Field(default_factory=list)
+    error: Optional[str] = None

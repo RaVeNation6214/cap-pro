@@ -20,8 +20,19 @@ import pickle
 import random
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
-import torch
-from torch.utils.data import Dataset, DataLoader
+try:
+    import torch
+    from torch.utils.data import Dataset, DataLoader
+    _TORCH_AVAILABLE = True
+except ImportError:
+    class _TorchStub:
+        Tensor = object
+        def __getattr__(self, name):
+            return None
+    torch = _TorchStub()
+    Dataset = object
+    DataLoader = None
+    _TORCH_AVAILABLE = False
 import numpy as np
 
 

@@ -1,10 +1,17 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 import os
 
 
 class Settings(BaseSettings):
     """Application settings."""
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=True,
+        extra='ignore',
+    )
 
     # API Settings
     API_V1_PREFIX: str = "/api"
@@ -13,7 +20,11 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # CORS Settings
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:5173", "http://localhost:5174", "http://localhost:5175",
+        "http://localhost:5176", "http://localhost:5177", "http://localhost:5178",
+        "http://localhost:3000", "http://127.0.0.1:5173",
+    ]
 
     # Model Settings
     MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "hybrid_gnn.pt")
@@ -48,9 +59,6 @@ class Settings(BaseSettings):
     # Detection thresholds per class
     DETECTION_THRESHOLDS: List[float] = [0.45, 0.40, 0.45, 0.40, 0.40]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 
 settings = Settings()

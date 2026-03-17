@@ -17,7 +17,7 @@ export default function Footer() {
                 <span className="text-xl font-bold gradient-text">SmartAudit</span>
               </div>
               <p className="text-dark-400 max-w-md">
-                Capstone interface for the SmartAudit backend. Run analysis, inspect
+                 Interface for the SmartAudit backend. Run analysis, inspect
                 model confidence, and review vulnerable lines in a single workflow.
               </p>
             </div>
@@ -49,13 +49,7 @@ export default function Footer() {
                 ))}
               </ul>
             </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div className="mt-8 pt-8 border-t border-dark-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-dark-500 text-sm flex items-center gap-1">
-              Made with <Heart className="w-4 h-4 text-red-500 animate-pulse" /> for B.Tech Capstone 2026
-            </p>
+        
 
             <div className="flex items-center gap-4">
               <motion.a

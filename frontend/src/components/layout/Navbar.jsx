@@ -1,137 +1,86 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Menu, X, FileCode } from 'lucide-react'
+import { Shield, FileCode, Home, BarChart3, Menu, X, Zap } from 'lucide-react'
 
-const navLinks = [
-  { path: '/', label: 'Home', icon: Shield },
+const NAV_LINKS = [
+  { path: '/',        label: 'Home',    icon: Home },
   { path: '/analyze', label: 'Analyze', icon: FileCode },
+  { path: '/results', label: 'Results', icon: BarChart3 },
 ]
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const location = useLocation()
+  const hasResults = typeof window !== 'undefined' && !!sessionStorage.getItem('analysisResult')
+  const visibleLinks = NAV_LINKS.filter(l => l.path !== '/results' || hasResults)
 
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 rounded-full bg-white/80 backdrop-blur border border-white/70 shadow-[0_20px_40px_rgba(120,110,220,0.2)] px-4 sm:px-6">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <motion.div
-                whileHover={{ rotate: 15, scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative"
-              >
-                <Shield className="w-7 h-7 text-primary-600" />
-              </motion.div>
-              <div className="flex flex-col">
-                <span className="text-sm sm:text-base font-bold text-dark-900 tracking-wide">
-                  SmartAudit
-                </span>
-                <span className="text-[10px] text-dark-500 hidden sm:block">AI Vulnerability Detection</span>
-              </div>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14">
+
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-base font-bold text-gray-900 tracking-tight">SmartAudit</span>
+            <span className="hidden sm:block text-xs text-gray-400 font-medium border border-gray-200 rounded px-1.5 py-0.5 bg-gray-50">AI</span>
+          </Link>
+
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-1">
+            {visibleLinks.map(({ path, label, icon: Icon }) => {
+              const active = location.pathname === path
+              return (
+                <Link key={path} to={path}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    active
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}>
+                  <Icon size={14} />
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link to="/analyze"
+              className="hidden md:flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm">
+              <Zap size={13} />
+              Analyze Contract
             </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
-              {navLinks.map((link) => {
-                const Icon = link.icon
-                const isActive = location.pathname === link.path
-
-                return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className="relative px-2 py-1 text-sm text-dark-600 hover:text-dark-900 transition-colors"
-                  >
-                    <motion.div
-                      className="flex items-center gap-2"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-primary-600' : 'text-dark-500'}`} />
-                      <span className={isActive ? 'text-primary-700 font-semibold' : 'text-dark-600'}>
-                        {link.label}
-                      </span>
-                    </motion.div>
-                    {isActive && (
-                      <motion.div
-                        layoutId="navbar-indicator"
-                        className="absolute -bottom-2 left-1/2 h-1 w-6 -translate-x-1/2 rounded-full bg-primary-500"
-                        initial={false}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                  </Link>
-                )
-              })}
-            </div>
-
-            {/* CTA Button */}
-            <div className="hidden md:block">
-              <Link to="/analyze">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,70,229,0.3)] transition hover:bg-primary-700"
-                >
-                  Open Analyzer
-                </motion.button>
-              </Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 rounded-lg bg-white/80 border border-primary-200"
-            >
-              {isOpen ? (
-                <X className="w-5 h-5 text-dark-700" />
-              ) : (
-                <Menu className="w-5 h-5 text-dark-700" />
-              )}
-            </motion.button>
+            <button onClick={() => setOpen(o => !o)}
+              className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+              {open ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden mt-3 mx-4 rounded-2xl bg-white/90 border border-white/70 shadow-[0_20px_40px_rgba(120,110,220,0.18)]"
-          >
-            <div className="px-4 py-4 space-y-2">
-              {navLinks.map((link) => {
-                const Icon = link.icon
-                const isActive = location.pathname === link.path
-
+        {open && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}
+            className="md:hidden border-t border-gray-100 bg-white overflow-hidden">
+            <div className="px-4 py-3 space-y-1">
+              {visibleLinks.map(({ path, label, icon: Icon }) => {
+                const active = location.pathname === path
                 return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive
-                      ? 'bg-primary-500/10 text-primary-700 border border-primary-500/20'
-                      : 'text-dark-700 hover:bg-primary-50'
-                      }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {link.label}
+                  <Link key={path} to={path} onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+                      active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'
+                    }`}>
+                    <Icon size={15} />{label}
                   </Link>
                 )
               })}
-              <Link
-                to="/analyze"
-                onClick={() => setIsOpen(false)}
-                className="w-full flex items-center justify-center gap-2 mt-4 rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,70,229,0.3)]"
-              >
-                Open Analyzer
+              <Link to="/analyze" onClick={() => setOpen(false)}
+                className="flex items-center justify-center gap-2 mt-2 px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">
+                <Zap size={14} />Analyze Contract
               </Link>
             </div>
           </motion.div>

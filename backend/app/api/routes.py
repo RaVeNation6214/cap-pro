@@ -1,6 +1,8 @@
 import logging
 from fastapi import APIRouter, HTTPException
 
+log = logging.getLogger("app.routes")
+
 from .schemas import (
     AnalyzeRequest,
     AnalysisResult,
@@ -8,6 +10,14 @@ from .schemas import (
     HealthResponse,
     AIHelpRequest,
     AIHelpResponse,
+    ChatRequest,
+    ChatResponse,
+    SlitherRequest,
+    SlitherResponse,
+    SlitherFinding,
+    MythrilRequest,
+    MythrilResponse,
+    MythrilFinding,
 )
 from ..core.config import settings
 from ..services.demo_mode import DemoModeAnalyzer
@@ -81,6 +91,8 @@ async def analyze_contract(request: AnalyzeRequest) -> AnalysisResult:
         # Demo mode (pattern-based)
         analyzer = get_demo_analyzer()
         result = analyzer.analyze(request.code)
+        detected = [v.type for v in result.vulnerabilities if v.probability > 0.4]
+        log.info(f"analyze → {result.risk_level} | {len(detected)} vulns: {detected} | cfg={len(result.cfg_nodes)}n,{len(result.cfg_edges)}e")
         return result
 
     except HTTPException:
@@ -159,7 +171,7 @@ async def health_check() -> HealthResponse:
         gnn_available = False
 
     try:
-        from ..static_analysis.slither_features import SLITHER_AVAILABLE
+        from ..services.slither_service import SLITHER_AVAILABLE
         slither_avail = SLITHER_AVAILABLE
     except Exception:
         slither_avail = False
@@ -282,3 +294,56 @@ async def model_info() -> dict:
             "strategy": "GraphCodeBERT baseline → Add GNN → Fine-tune end-to-end",
         },
     }
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest) -> ChatResponse:
+    """
+    Multi-turn Gemini chatbot endpoint.
+    Accepts full message history + optional contract/analysis context.
+    """
+    try:
+        gemini = get_gemini_service()
+        messages = [{"role": m.role, "content": m.content} for m in request.messages]
+        result = gemini.chat(
+            messages,
+            contract_context=request.contract_context or "",
+            analysis_context=request.analysis_context or "",
+        )
+        return ChatResponse(reply=result["reply"], model=result["model"], status=result["status"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
+
+@router.post("/slither", response_model=SlitherResponse)
+async def run_slither_analysis(request: SlitherRequest) -> SlitherResponse:
+    """Run Slither static analysis on submitted Solidity code."""
+    try:
+        from ..services.slither_service import run_slither
+        result = run_slither(request.code)
+        findings = [SlitherFinding(**f) for f in result.get("findings", [])]
+        return SlitherResponse(
+            available=result["available"],
+            findings=findings,
+            raw_output=result.get("raw_output", ""),
+            error=result.get("error"),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Slither analysis failed: {str(e)}")
+
+
+@router.post("/mythril", response_model=MythrilResponse)
+async def run_mythril_analysis(request: MythrilRequest) -> MythrilResponse:
+    """Run Mythril SWC checks on submitted Solidity code."""
+    try:
+        from ..services.mythril_service import run_mythril
+        result = run_mythril(request.code)
+        findings = [MythrilFinding(**f) for f in result.get("findings", [])]
+        log.info("mythril → %d findings", len(findings))
+        return MythrilResponse(
+            available=result["available"],
+            findings=findings,
+            error=result.get("error"),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mythril analysis failed: {str(e)}")

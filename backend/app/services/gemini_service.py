@@ -183,5 +183,38 @@ Contract code:
 *Note: Enable GEMINI_API_KEY for AI-powered personalized analysis.*
 """
 
+    def chat(self, messages: list, contract_context: str = "", analysis_context: str = "") -> Dict[str, str]:
+        """Multi-turn chatbot with optional contract/analysis context."""
+        if not self.available:
+            return {
+                "reply": "Gemini AI is not configured. Please set GEMINI_API_KEY in the backend `.env` file.",
+                "status": "fallback",
+                "model": "static",
+            }
+        try:
+            system = SYSTEM_PROMPT
+            if contract_context:
+                system += f"\n\nCurrent contract under review:\n```solidity\n{contract_context[:2000]}\n```"
+            if analysis_context:
+                system += f"\n\nAnalysis summary:\n{analysis_context[:800]}"
+
+            contents = []
+            for msg in messages:
+                role = "user" if msg.get("role") == "user" else "model"
+                contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
+
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=contents,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=system,
+                    temperature=0.4,
+                ),
+            )
+            return {"reply": response.text, "status": "success", "model": self.model_name}
+        except Exception as e:
+            logger.error(f"Gemini chat failed: {e}")
+            return {"reply": f"AI error: {str(e)}", "status": "error", "model": "static"}
+
     def is_available(self) -> bool:
         return self.available

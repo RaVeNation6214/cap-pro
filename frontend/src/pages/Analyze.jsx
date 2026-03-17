@@ -140,7 +140,7 @@ export default function Analyze() {
     try {
       const result = await analyzeContract(code)
       sessionStorage.setItem('analysisResult', JSON.stringify(result))
-      sessionStorage.setItem('analyzedCode', code)
+      sessionStorage.setItem('contractCode', code)
       navigate('/results')
     } catch (err) {
       setError(err.message || 'Analysis failed. Please try again.')
@@ -190,7 +190,7 @@ export default function Analyze() {
   }, [code])
 
   return (
-    <div className="pt-24 pb-12 min-h-screen bg-gradient-to-b from-[#f7f6ff] to-white">
+    <div className="pt-8 pb-12 min-h-screen bg-gradient-to-b from-[#f7f6ff] to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

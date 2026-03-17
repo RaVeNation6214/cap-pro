@@ -3,7 +3,7 @@ import { CheckCircle, Shield, Code, BarChart3, GitBranch } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="pt-24 bg-gradient-to-b from-[#efeefe] via-[#f7f6ff] to-white">
+    <div className="pt-8 bg-gradient-to-b from-[#efeefe] via-[#f7f6ff] to-white">
       <section className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto rounded-[32px] bg-gradient-to-br from-[#bdb8ff] via-[#d6d3ff] to-[#9a95ff] p-6 sm:p-8 lg:p-10 shadow-[0_35px_80px_rgba(88,73,218,0.35)]">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] items-center">
@@ -29,10 +29,7 @@ export default function Home() {
                   <span className="text-white/80">→</span>
                 </Link>
               </div>
-              <div className="mt-10 flex items-center gap-3 text-sm text-dark-700">
-                <CheckCircle className="w-4 h-4 text-dark-800" />
-                Capstone demo connected to the backend inference pipeline
-              </div>
+     
             </div>
 
             <div className="relative">
@@ -130,7 +127,7 @@ export default function Home() {
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-primary-600 mb-3">Capstone objectives</p>
+        
               <h2 className="text-3xl sm:text-4xl font-bold text-dark-900 mb-6">
                 Bring research-grade detection to every analysis
               </h2>
@@ -146,10 +143,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 flex items-center gap-3 text-sm text-dark-500">
-                <GitBranch className="w-4 h-4 text-primary-500" />
-                Built to demonstrate the backend model in a clean UI
-              </div>
+      
             </div>
           </div>
         </div>
@@ -160,21 +154,10 @@ export default function Home() {
           <div className="rounded-2xl bg-white border border-[#ebe9ff] shadow-[0_25px_60px_rgba(122,109,216,0.18)] p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold">
-                  Cap
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-dark-900">Capstone Project</p>
-                  <p className="text-xs text-dark-500">B.Tech 2026 • Smart Contract Security</p>
-                </div>
+                
               </div>
-              <div className="text-xs text-dark-500">“A compact UI to validate backend model performance end‑to‑end.”</div>
             </div>
-            <p className="mt-6 text-sm text-dark-600 leading-relaxed max-w-3xl">
-              This interface focuses on clarity: input a contract, run the backend model, and
-              review detected vulnerabilities with confidence scores. It is built to demonstrate
-              the full pipeline for our capstone evaluation.
-            </p>
+           
           </div>
         </div>
       </section>
