@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # Model Settings
     MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "hybrid_gnn.pt")
-    DEMO_MODE: bool = True  # Set to False to use trained model from models/hybrid_gnn.pt
+    DEMO_MODE: bool = False  # Uses trained HybridGNN (GCB + GAT) from models/hybrid_gnn.pt
     NUM_CLASSES: int = 5
 
     # HybridGNN Architecture

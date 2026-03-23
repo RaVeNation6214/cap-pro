@@ -1394,12 +1394,13 @@ contract ERC20token{
 
     def analyze_with_probs(self, code: str, probs: Dict[str, float]) -> 'AnalysisResult':
         """
-        Build a full AnalysisResult using GNN model probabilities.
-        Uses the same rich output format as analyze(), but with real model scores.
+        Build a complete AnalysisResult using REAL GNN model probabilities.
+        All vulnerability scores come from the trained model.
+        CFG, function metrics, line risks, radar data all use real GNN scores.
         """
         lines = code.split('\n')
+        line_features = self.feature_extractor.extract_line_features(code)
 
-        # Map string class names to VulnerabilityType enum
         class_map = {
             "reentrancy": VulnerabilityType.REENTRANCY,
             "arithmetic": VulnerabilityType.ARITHMETIC,
@@ -1408,33 +1409,35 @@ contract ERC20token{
             "timestamp": VulnerabilityType.TIMESTAMP,
         }
 
+        # Real GNN probabilities — no random noise
         vuln_scores: Dict[VulnerabilityType, float] = {
-            class_map[k]: float(v) for k, v in probs.items() if k in class_map
+            vt: float(probs.get(k, 0.05))
+            for k, vt in class_map.items()
         }
 
-        # Use pattern matching only for line-level attribution
-        affected_lines: Dict[VulnerabilityType, List[int]] = {
-            vt: [] for vt in VulnerabilityType
-        }
+        # Pattern matching used ONLY for line-level attribution (which lines are risky)
+        affected_lines: Dict[VulnerabilityType, List[int]] = {vt: [] for vt in VulnerabilityType}
         for compiled_pattern, pattern in self.compiled_patterns:
             for match in compiled_pattern.finditer(code):
                 line_num = code[:match.start()].count('\n') + 1
                 if line_num not in affected_lines[pattern.vuln_type]:
                     affected_lines[pattern.vuln_type].append(line_num)
 
-        # Line-level risks based on GNN scores + pattern attribution
+        # Line-level risk: use GNN score for lines where patterns match, static features elsewhere
         line_risks = []
         for i, line in enumerate(lines):
             line_num = i + 1
             risk_score = 0.0
             for vt in VulnerabilityType:
                 if line_num in affected_lines[vt]:
-                    risk_score = max(risk_score, vuln_scores.get(vt, 0.0))
-            line_feature = self.feature_extractor.extract_line_features(line + '\n')
-            if line_feature and line_feature[0]['has_call'] > 0:
-                risk_score = max(risk_score, 0.5)
-            if line_feature and line_feature[0]['has_tx_origin'] > 0:
-                risk_score = max(risk_score, 0.75)
+                    risk_score = max(risk_score, vuln_scores[vt])
+            lf = line_features[i] if i < len(line_features) else {}
+            if lf.get('has_call', 0) > 0:
+                risk_score = max(risk_score, vuln_scores[VulnerabilityType.REENTRANCY] * 0.9)
+            if lf.get('has_tx_origin', 0) > 0:
+                risk_score = max(risk_score, vuln_scores[VulnerabilityType.ACCESS_CONTROL])
+            if lf.get('has_delegatecall', 0) > 0:
+                risk_score = max(risk_score, vuln_scores[VulnerabilityType.UNCHECKED_CALLS])
             line_risks.append(LineRisk(
                 line_number=line_num,
                 content=line,
@@ -1442,10 +1445,10 @@ contract ERC20token{
                 is_vulnerable=risk_score > 0.5
             ))
 
-        # Build vulnerability predictions
+        # Vulnerability predictions from real GNN scores
         vulnerabilities = []
         for vt in VulnerabilityType:
-            prob = vuln_scores.get(vt, 0.05)
+            prob = vuln_scores[vt]
             vulnerabilities.append(VulnerabilityPrediction(
                 type=vt,
                 probability=round(prob, 4),
@@ -1459,6 +1462,18 @@ contract ERC20token{
         summary = self._generate_summary(vulnerabilities, overall_risk)
         recommendations = self._generate_recommendations(vulnerabilities)
 
+        # Full dashboard data using real GNN scores
+        cfg_nodes, cfg_edges = self._build_cfg(code, lines, vuln_scores, affected_lines)
+        radar_data = self._build_radar_data(vuln_scores)
+        function_metrics = self._build_function_metrics(code, lines, vuln_scores, affected_lines)
+        slither_comparison = self._build_slither_comparison(code, vulnerabilities)
+
+        self.logger.info(
+            "GNN analysis complete. risk=%s score=%.4f vulns=%s",
+            self._get_risk_level(overall_risk), overall_risk,
+            [(v.type.value, round(v.probability, 2)) for v in vulnerabilities if v.probability > 0.3]
+        )
+
         return AnalysisResult(
             overall_risk_score=round(overall_risk, 4),
             risk_level=self._get_risk_level(overall_risk),
@@ -1466,7 +1481,12 @@ contract ERC20token{
             line_risks=line_risks,
             attention_weights=attention_weights,
             summary=summary,
-            recommendations=recommendations
+            recommendations=recommendations,
+            cfg_nodes=cfg_nodes,
+            cfg_edges=cfg_edges,
+            radar_data=radar_data,
+            function_metrics=function_metrics,
+            slither_comparison=slither_comparison,
         )
 
     def get_sample_contracts(self) -> List[SampleContract]:

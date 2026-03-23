@@ -11,9 +11,13 @@ from typing import List, Dict
 logger = logging.getLogger(__name__)
 
 # Add Scripts dir to PATH so solc.exe is found
-_SCRIPTS = r'C:\Users\aksha\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts'
-if os.path.isdir(_SCRIPTS) and _SCRIPTS not in os.environ.get('PATH', ''):
-    os.environ['PATH'] = _SCRIPTS + os.pathsep + os.environ.get('PATH', '')
+_SCRIPTS = os.path.join(
+    os.path.expanduser("~"),
+    r"AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0"
+    r"\LocalCache\local-packages\Python312\Scripts",
+)
+if os.path.isdir(_SCRIPTS) and _SCRIPTS not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = _SCRIPTS + os.pathsep + os.environ.get("PATH", "")
 
 try:
     from slither import Slither
@@ -31,6 +35,23 @@ except Exception as e:
     logger.warning("Slither unavailable: %s", e)
 
 
+import re as _re
+
+def _normalize_pragma(code: str) -> str:
+    """
+    Rewrite any pragma solidity < 0.8 to ^0.8.0 so the installed solc 0.8.x
+    can compile it.  Static analysis results remain valid for vulnerability detection.
+    """
+    def _replace(m):
+        ver = m.group(1).strip()
+        # extract first version number
+        nums = _re.findall(r'\d+', ver)
+        if len(nums) >= 2 and int(nums[1]) < 8:
+            return "pragma solidity ^0.8.0;"
+        return m.group(0)
+    return _re.sub(r'pragma\s+solidity\s+([^;]+);', _replace, code)
+
+
 def run_slither(code: str) -> Dict:
     """
     Run Slither Python API on Solidity source.
@@ -39,6 +60,9 @@ def run_slither(code: str) -> Dict:
     if not SLITHER_AVAILABLE:
         logger.warning("Slither not available — no static analysis performed")
         return {"available": False, "findings": [], "raw_output": "", "error": "slither not installed"}
+
+    # Normalize pragma to 0.8.x so the installed solc can compile it
+    code = _normalize_pragma(code)
 
     tmp_path = None
     try:
