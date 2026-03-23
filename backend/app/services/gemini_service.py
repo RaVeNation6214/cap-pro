@@ -75,7 +75,7 @@ class GeminiService:
 
         try:
             self.client = genai.Client(api_key=key)
-            self.model_name = "gemini-2.0-flash"
+            self.model_name = "gemini-2.5-flash"
             self.available = True
             logger.info("Gemini AI service initialized successfully (google-genai SDK).")
         except Exception as e:
